@@ -1,4 +1,6 @@
-config.js
+src/config.ts
+.env
 node_modules
 letsencrypt/
 cloudflare_ip.json
+build/

@@ -6,6 +6,7 @@ GIT="env -i git"
 CMD_PWD="cd .. && pwd"
 CMD_FETCH="$GIT fetch"
 CMD_NPM="npm install --production --no-save"
+CMD_BUILD="npm run build"
 CMD_RESTART="pm2 restart pm2.json"
 
 echo "$ $CMD_PWD"
@@ -19,6 +20,9 @@ if $GIT diff --name-only $oldrev $newrev | grep "^package-lock.json"; then
 else
 	echo "# Skipping npm install, lockfile not modified"
 fi
+
+echo "$ $CMD_BUILD"
+eval $CMD_BUILD
 
 echo "$ $CMD_RESTART"
 eval $CMD_RESTART
