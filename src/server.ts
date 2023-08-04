@@ -1,16 +1,27 @@
 import express from 'express';
-import fs from 'fs';
-import https from 'https';
 import { Server } from 'socket.io';
 
 import config from './config';
 import log from './log';
 import moment from './moment-setup';
-import { ClientToServerEventNames, ClientToServerEvents, ServerToClientEventNames, ServerToClientEvents } from "./event-names";
+import {
+  ClientToServerEventNames,
+  ClientToServerEvents,
+  ServerToClientEventNames,
+  ServerToClientEvents
+} from "./event-names";
 import findRealIp from './real-ip';
-import { authByCookie, authGuest, decodeJson, getGuestID, leaveRoom, sendNotificationCount } from "./utils";
+import {
+  authByCookie,
+  authGuest,
+  decodeJson,
+  getGuestID,
+  leaveRoom,
+  sendNotificationCount
+} from "./utils";
 import { Database } from "./database";
 import { AppSocket, ClientMetadata, InterServerEvents, SocketMetadata } from "./common-types";
+import { createServer } from "http";
 
 process.title = 'Muffins';
 
@@ -20,10 +31,7 @@ app.get('/', (req, res) => {
   res.sendStatus(403);
 });
 
-const server = https.createServer({
-  cert: fs.readFileSync(config.SSL_CERT),
-  key: fs.readFileSync(config.SSL_KEY),
-}, app);
+const server = createServer(app);
 server.listen(config.PORT, config.HOST);
 const io = new Server<ClientToServerEvents, ServerToClientEvents, InterServerEvents, SocketMetadata>(server, {
   cors: {
@@ -135,7 +143,10 @@ io.on('connection', async socket => {
     params = decodeJson(params);
 
     if (params.clientid in SocketMap) {
-      SocketMap[params.clientid].emit(ServerToClientEventNames.HELLO, { success: true, priv: params.priv });
+      SocketMap[params.clientid].emit(ServerToClientEventNames.HELLO, {
+        success: true,
+        priv: params.priv
+      });
     } else {
       log(`Client ${params.clientid} not found among connected clients`);
     }

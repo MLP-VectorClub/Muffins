@@ -8,15 +8,10 @@ export interface AppConfig {
   WS_SERVER_KEY: string,
   ORIGIN_REGEX: RegExp,
 
-  LE_SERVER: string,
-  LE_EMAIL: string,
-  LE_DOMAINS: string[],
   CF_KEY: string,
 
   // For development only
   LOCALHOST: boolean,
-  SSL_CERT: string,
-  SSL_KEY: string,
 }
 
 const defaultConfig: AppConfig = {
@@ -29,13 +24,8 @@ const defaultConfig: AppConfig = {
   WS_SERVER_KEY: '',
   ORIGIN_REGEX: /^(https:\/\/mlpvector\.lc|http:\/\/localhost)/,
 
-  LE_SERVER: 'staging',
-  LE_EMAIL: '',
-  LE_DOMAINS: ['ws.mlpvector.lc'],
   CF_KEY: '',
 
   // For development only
   LOCALHOST: true,
-  SSL_CERT: "/path/to/ssl.crt",
-  SSL_KEY: "/path/to/ssl.key",
 };
