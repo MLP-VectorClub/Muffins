@@ -15,7 +15,7 @@ export interface AppConfig {
 }
 
 const defaultConfig: AppConfig = {
-  PORT: 8443,
+  PORT: 3672,
   HOST: '127.0.0.1',
 
   DB_HOST: '',
