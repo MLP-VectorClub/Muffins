@@ -61,7 +61,9 @@ io.on('connection', async socket => {
     };
   socket.data.rooms = {};
   const clientRealIp = await findRealIp(socket);
-  socket.data.network = clientRealIp ? createHash('sha256').update(clientRealIp).digest().toString('base64') : null;
+  socket.data.network = clientRealIp
+    ? createHash('md5').update(config.WS_SERVER_KEY).update(clientRealIp).digest().toString('base64url')
+    : null;
   socket.data.connected = moment();
   SocketMap[socket.id] = socket;
 
