@@ -1,6 +1,6 @@
 import { Socket } from "socket.io";
 import { ClientToServerEvents, ServerToClientEventNames, ServerToClientEvents } from "./event-names";
-import { QueryResult } from "pg";
+import { QueryResult, QueryResultRow } from 'pg';
 import { Database } from "./database";
 import { AppSocket, UserMetadata } from "./common-types";
 import config from "./config";
@@ -8,7 +8,7 @@ import createHash from "sha.js";
 
 const sha256hash = (data: string) => createHash('sha256').update(data, 'utf8').digest('hex');
 
-export const handleQuery = <ResultType = unknown>(f: (results: QueryResult<ResultType>['rows']) => void) =>
+export const handleQuery = <ResultType extends QueryResultRow>(f: (results: QueryResult<ResultType>['rows']) => void) =>
   (err: Error, result: QueryResult<ResultType>) => {
     if (err) {
       return console.error('error running query', err);

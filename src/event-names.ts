@@ -2,7 +2,6 @@ import { ClientMetadata, ObjectResponse, ResponseWithStatus } from "./common-typ
 
 export enum ClientToServerEventNames {
   DEV_QUERY = 'devquery',
-  HELLO = 'hello',
   NAVIGATE = 'navigate',
   NOTIFICATION_COUNT = 'notif-cnt',
   SEND_NOTIFICATION = 'notify-pls',
@@ -13,7 +12,6 @@ export enum ClientToServerEventNames {
 
 export type ClientToServerEvents = {
   [ClientToServerEventNames.DEV_QUERY]: (data: { what: 'status' }, callback: (r: ObjectResponse<{ clients: Record<string, ClientMetadata> }> | ResponseWithStatus) => void) => void;
-  [ClientToServerEventNames.HELLO]: (data: { clientid: string; priv: string }) => undefined | ResponseWithStatus;
   [ClientToServerEventNames.NAVIGATE]: (data: { page: string }) => void;
   [ClientToServerEventNames.NOTIFICATION_COUNT]: () => void;
   [ClientToServerEventNames.SEND_NOTIFICATION]: (data: { user: string }) => void;

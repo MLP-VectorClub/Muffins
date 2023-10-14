@@ -1,5 +1,6 @@
 import express from 'express';
 import { Server } from 'socket.io';
+import { createHash } from 'node:crypto'
 
 import config from './config';
 import log from './log';
@@ -71,7 +72,8 @@ io.on('connection', async socket => {
       log(`[${socket.data.user?.id};${socket.id}] ${msg}`);
     };
   socket.data.rooms = {};
-  socket.data.ip = await findRealIp(socket);
+  const clientRealIp = await findRealIp(socket);
+  socket.data.network = clientRealIp ? createHash('sha256').update(clientRealIp).digest().toString('base64') : null;
   socket.data.connected = moment();
   SocketMap[socket.id] = socket;
 
@@ -122,33 +124,26 @@ io.on('connection', async socket => {
         const clients: Record<string, ClientMetadata> = {};
         (await io.fetchSockets()).forEach((connectedSocket) => {
           const { id } = connectedSocket;
-          if (id === socket.id && !config.LOCALHOST)
+          if (id === connectedSocket.id && !config.LOCALHOST)
             return;
 
-          clients[id] = socket.data as ClientMetadata;
-          if (typeof clients[id].connected !== 'undefined')
-            clients[id].connectedSince = clients[id].connected.fromNow();
+          clients[id] = {
+            network: connectedSocket.data.network,
+            connected: connectedSocket.data.connected,
+            page: connectedSocket.data.page,
+            user: {
+              id: connectedSocket.data.user.id,
+              role: connectedSocket.data.user.role,
+              name: connectedSocket.data.user.name
+            },
+            rooms: connectedSocket.data.rooms,
+            connectedSince: connectedSocket.data.connected ? connectedSocket.data.connected.fromNow() : undefined,
+          };
         });
         fn({ success: true, clients });
         break;
       default:
         fn({ success: false, message: `Unknown type ${params.what}` });
-    }
-  });
-
-  socket.on(ClientToServerEventNames.HELLO, params => {
-    if (socket.data.user?.role !== 'server')
-      return { success: false };
-
-    params = decodeJson(params);
-
-    if (params.clientid in SocketMap) {
-      SocketMap[params.clientid].emit(ServerToClientEventNames.HELLO, {
-        success: true,
-        priv: params.priv
-      });
-    } else {
-      log(`Client ${params.clientid} not found among connected clients`);
     }
   });
 
