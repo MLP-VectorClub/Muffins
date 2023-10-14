@@ -1,6 +1,7 @@
 import { Socket } from "socket.io";
 import { ClientToServerEvents, ServerToClientEvents } from "./event-names";
 import { Moment } from "moment-timezone";
+import { Handshake } from 'socket.io/dist/socket';
 
 export interface ResponseWithStatus {
   success: boolean;
@@ -21,7 +22,8 @@ export interface SocketMetadata {
   network: string | null;
   connected: Moment;
   page: string;
-  user: UserMetadata
+  user: UserMetadata;
+  headers: Handshake['headers'];
 }
 
 export interface ClientMetadata extends SocketMetadata {
