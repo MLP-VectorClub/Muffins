@@ -17,7 +17,7 @@ export interface UserMetadata {
 
 export interface SocketMetadata {
   rooms: Record<string, boolean>;
-  ip: string | null;
+  network: string | null;
   connected: Moment;
   page: string;
   user: UserMetadata
