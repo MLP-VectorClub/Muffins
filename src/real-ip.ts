@@ -30,7 +30,7 @@ const findRealIp = async (socket: Socket): Promise<string | null> => {
   const remoteAddressIn = socket.request.connection.remoteAddress;
   if (remoteAddressIn) {
     remoteAddress = ipRangeCheck.storeIP(remoteAddressIn);
-    const cfConnectingIpHeader = socket.client.request.headers?.['cf-connecting-ip'];
+    const cfConnectingIpHeader = socket.client.request.headers?.['x-real-ip'];
     if (typeof cfConnectingIpHeader === 'string') {
       const cfConnectingIp = ipRangeCheck.storeIP(cfConnectingIpHeader);
       try {
