@@ -1,28 +1,16 @@
 import express from 'express';
 import { Server } from 'socket.io';
-import { createHash } from 'node:crypto'
+import { createHash } from 'node:crypto';
 
 import config from './config';
 import log from './log';
 import moment from './moment-setup';
-import {
-  ClientToServerEventNames,
-  ClientToServerEvents,
-  ServerToClientEventNames,
-  ServerToClientEvents
-} from "./event-names";
+import { ClientToServerEventNames, ClientToServerEvents, ServerToClientEventNames, ServerToClientEvents } from './event-names';
 import findRealIp from './real-ip';
-import {
-  authByCookie,
-  authGuest,
-  decodeJson,
-  getGuestID,
-  leaveRoom,
-  sendNotificationCount
-} from "./utils";
-import { Database } from "./database";
-import { AppSocket, ClientMetadata, InterServerEvents, SocketMetadata } from "./common-types";
-import { createServer } from "http";
+import { authByCookie, authGuest, decodeJson, getGuestID, leaveRoom, sendNotificationCount } from './utils';
+import { Database } from './database';
+import { AppSocket, ClientMetadata, InterServerEvents, SocketMetadata } from './common-types';
+import { createServer } from 'http';
 
 process.title = 'Muffins';
 
@@ -37,15 +25,15 @@ server.listen(config.PORT, config.HOST);
 const io = new Server<ClientToServerEvents, ServerToClientEvents, InterServerEvents, SocketMetadata>(server, {
   cors: {
     origin: config.ORIGIN_REGEX,
-    methods: ["GET"],
-    credentials: true
+    methods: ['GET'],
+    credentials: true,
   },
   allowRequest: (req, callback) => {
     const origin = req.headers.origin || '';
     if (!config.ORIGIN_REGEX.test(origin))
       return callback('origin not allowed', false);
     callback(null, true);
-  }
+  },
 });
 log(`[Socket.io] Server listening on https://${config.HOST}:${config.PORT}`);
 
@@ -121,25 +109,23 @@ io.on('connection', async socket => {
 
     switch (params.what) {
       case 'status':
-        const clients: Record<string, ClientMetadata> = {};
-        (await io.fetchSockets()).forEach((connectedSocket) => {
-          const { id } = connectedSocket;
-          if (id === connectedSocket.id && !config.LOCALHOST)
-            return;
-
-          clients[id] = {
+        const sockets = await io.fetchSockets();
+        const clients = sockets.reduce((data: Record<string, ClientMetadata>, connectedSocket) => ({
+          ...data,
+          [connectedSocket.id]: {
+            current: connectedSocket.id === socket.id,
             network: connectedSocket.data.network,
             connected: connectedSocket.data.connected,
             page: connectedSocket.data.page,
             user: {
               id: connectedSocket.data.user.id,
               role: connectedSocket.data.user.role,
-              name: connectedSocket.data.user.name
+              name: connectedSocket.data.user.name,
             },
             rooms: connectedSocket.data.rooms,
             connectedSince: connectedSocket.data.connected ? connectedSocket.data.connected.fromNow() : undefined,
-          };
-        });
+          },
+        }), {});
         fn({ success: true, clients });
         break;
       default:
