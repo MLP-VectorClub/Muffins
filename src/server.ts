@@ -118,7 +118,6 @@ io.on('connection', async socket => {
             current: connectedSocket.id === socket.id,
             network: connectedSocket.data.network,
             connected: connectedSocket.data.connected,
-            headers: connectedSocket.handshake.headers,
             page: connectedSocket.data.page,
             user: {
               id: connectedSocket.data.user.id,
