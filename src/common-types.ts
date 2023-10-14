@@ -16,6 +16,7 @@ export interface UserMetadata {
 }
 
 export interface SocketMetadata {
+  current: boolean;
   rooms: Record<string, boolean>;
   network: string | null;
   connected: Moment;
