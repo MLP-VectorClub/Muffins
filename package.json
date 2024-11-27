@@ -1,6 +1,7 @@
 {
   "name": "muffins",
   "version": "2.0.0",
+  "type": "module",
   "dependencies": {
     "cors": "^2.8.5",
     "express": "^4.21.1",
@@ -14,6 +15,7 @@
   },
   "scripts": {
     "start": "pm2 start pm2.json",
+    "preview": "node ./build/server.js",
     "start:dev": "tsx src/server.ts",
     "prebuild": "rimraf build",
     "build": "tsc"

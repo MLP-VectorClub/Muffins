@@ -1,4 +1,4 @@
-import { AppConfig } from './app-config';
+import { AppConfig } from './app-config.js';
 
 const defaultConfig: AppConfig = {
   PORT: 3672,

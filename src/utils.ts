@@ -1,9 +1,9 @@
 import { Socket } from "socket.io";
-import { ClientToServerEvents, ServerToClientEventNames, ServerToClientEvents } from "./event-names";
+import { ClientToServerEvents, ServerToClientEventNames, ServerToClientEvents } from "./event-names.js";
 import { QueryResult, QueryResultRow } from 'pg';
-import { Database } from "./database";
-import { AppSocket, UserMetadata } from "./common-types";
-import config from "./config";
+import { Database } from "./database.js";
+import { AppSocket, UserMetadata } from "./common-types.js";
+import config from "./config.js";
 import createHash from "sha.js";
 
 const sha256hash = (data: string) => createHash('sha256').update(data, 'utf8').digest('hex');
