@@ -1,4 +1,4 @@
-import { ClientMetadata, ObjectResponse, ResponseWithStatus } from "./common-types";
+import { ClientMetadata, ObjectResponse, ResponseWithStatus } from "./common-types.js";
 
 export enum ClientToServerEventNames {
   DEV_QUERY = 'devquery',

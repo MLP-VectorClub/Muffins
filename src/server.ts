@@ -2,14 +2,14 @@ import express from 'express';
 import { Server } from 'socket.io';
 import { createHash } from 'node:crypto';
 
-import config from './config';
-import log from './log';
-import moment from './moment-setup';
-import { ClientToServerEventNames, ClientToServerEvents, ServerToClientEventNames, ServerToClientEvents } from './event-names';
-import findRealIp from './real-ip';
-import { authByCookie, authGuest, decodeJson, getGuestID, leaveRoom, sendNotificationCount } from './utils';
-import { Database } from './database';
-import { AppSocket, ClientMetadata, InterServerEvents, SocketMetadata } from './common-types';
+import config from './config.js';
+import log from './log.js';
+import moment from './moment-setup.js';
+import { ClientToServerEventNames, ClientToServerEvents, ServerToClientEventNames, ServerToClientEvents } from './event-names.js';
+import findRealIp from './real-ip.js';
+import { authByCookie, authGuest, decodeJson, getGuestID, leaveRoom, sendNotificationCount } from './utils.js';
+import { Database } from './database.js';
+import { AppSocket, ClientMetadata, InterServerEvents, SocketMetadata } from './common-types.js';
 import { createServer } from 'http';
 
 process.title = 'Muffins';

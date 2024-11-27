@@ -1,6 +1,6 @@
 import fetch from 'node-fetch';
 import ipRangeCheck from 'range_check';
-import log from './log';
+import log from './log.js';
 import { Socket } from 'socket.io';
 
 const state: { ranges: string[], fetched: boolean } = { ranges: ['127.0.0.0/24'], fetched: false };

@@ -1,5 +1,5 @@
 import { Socket } from "socket.io";
-import { ClientToServerEvents, ServerToClientEvents } from "./event-names";
+import { ClientToServerEvents, ServerToClientEvents } from "./event-names.js";
 import { Moment } from "moment-timezone";
 
 export interface ResponseWithStatus {
