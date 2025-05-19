@@ -20,7 +20,7 @@
     "prebuild": "rimraf build",
     "build": "tsc"
   },
-  "author": "SeinopSys <seinopsys@gmail.com> (https://github.com/SeinopSys)",
+  "author": "WentTheFox (https://went.tf)",
   "private": true,
   "devDependencies": {
     "@types/express": "^4.17.21",
