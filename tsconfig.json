@@ -1,0 +1,16 @@
+{
+  "compilerOptions": {
+    "incremental": true,
+    "target": "ESNext",
+    "module": "ESNext",
+    "rootDir": "./src",
+    "baseUrl": "./src",
+    "moduleResolution": "node",
+    "outDir": "./build",
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "tsBuildInfoFile": "./build/.tsbuildinfo",
+    "strict": true,
+    "skipLibCheck": true
+  }
+}
