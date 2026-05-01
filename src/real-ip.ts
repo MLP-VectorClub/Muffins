@@ -1,7 +1,7 @@
 import fetch from 'node-fetch';
-import ipRangeCheck from 'range_check';
-import log from './log.js';
+import { inRange, storeIP } from 'range_check';
 import { Socket } from 'socket.io';
+import log from './log.js';
 
 const state: { ranges: string[], fetched: boolean } = { ranges: ['127.0.0.0/24'], fetched: false };
 
@@ -29,15 +29,14 @@ const findRealIp = async (socket: Socket): Promise<string | null> => {
   let remoteAddress: string | null = null;
   const connectionAddress = socket.request.connection.remoteAddress;
   if (connectionAddress) {
-    remoteAddress = ipRangeCheck.storeIP(connectionAddress);
+    remoteAddress = storeIP(connectionAddress);
     const realIpHeader = socket.client.request.headers?.['x-real-ip'];
     if (typeof realIpHeader === 'string') {
-      const realIp = ipRangeCheck.storeIP(realIpHeader);
+      const realIp = storeIP(realIpHeader);
       try {
-        if (remoteAddress && ipRangeCheck.inRange(remoteAddress, state.ranges))
+        if (remoteAddress && inRange(remoteAddress, state.ranges))
           remoteAddress = realIp;
-      }
-      catch (e) {
+      } catch (e) {
         console.error(`Invalid CloudFlare IP received: ${remoteAddress} (${e})\n${(e as Error).stack}`);
       }
     }
