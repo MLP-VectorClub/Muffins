@@ -37,7 +37,7 @@ const io = new Server<ClientToServerEvents, ServerToClientEvents, InterServerEve
 });
 log(`[Socket.io] Server listening on https://${config.HOST}:${config.PORT}`);
 
-Database.connect(err => {
+Database.connect((err: Error | null) => {
   if (err !== null) {
     log(`[Database] Connection failed, exiting (${err})`);
     return process.exit();
