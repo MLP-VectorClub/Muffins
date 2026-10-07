@@ -12,9 +12,14 @@ const envSchema = z.object({
   HOST: z.string().min(1).default('127.0.0.1'),
 
   DB_HOST: z.string().min(1),
+  // `mlpvc-rr` is Winterchilla's database, Luna's own is used once the two share one
+  DB_NAME: z.string().min(1).default('mlpvc-rr'),
   DB_USER: z.string().min(1),
   DB_PASS: z.string().min(1),
   WS_SERVER_KEY: z.string().min(1),
+  // Where Luna answers from this machine (e.g. http://127.0.0.1:8000), to check the one time tokens its front end hands to browsers; without it only
+  // Winterchilla's cookie works
+  LUNA_URL: z.url().optional(),
   ORIGIN_REGEX: z.string().min(1).default('^(https://mlpvector\\.lc|http://localhost)').transform((value, ctx) => {
     try {
       return new RegExp(value);

@@ -1,13 +1,13 @@
 import express from 'express';
 import { Server } from 'socket.io';
-import { createHash } from 'node:crypto';
+import { createHash, timingSafeEqual } from 'node:crypto';
 
 import config from './config.js';
 import log from './log.js';
 import moment from './moment-setup.js';
 import { ClientToServerEventNames, ClientToServerEvents, ServerToClientEventNames, ServerToClientEvents } from './event-names.js';
 import findRealIp from './real-ip.js';
-import { authByCookie, authGuest, decodeJson, getGuestID, leaveRoom, sendNotificationCount } from './utils.js';
+import { authByCookie, authByLunaToken, authGuest, decodeJson, getGuestID, leaveRoom, sendNotificationCount } from './utils.js';
 import { Database } from './database.js';
 import { AppSocket, ClientMetadata, InterServerEvents, SocketMetadata } from './common-types.js';
 import { createServer } from 'http';
@@ -16,8 +16,30 @@ process.title = 'Muffins';
 
 let app = express();
 
+app.use(express.json({ limit: '1kb' }));
+
 app.get('/', (req, res) => {
   res.sendStatus(403);
+});
+
+const keyMatches = (header: string | undefined) => {
+  const given = Buffer.from((header ?? '').replace(/^Bearer /i, ''));
+  const expected = Buffer.from(config.WS_SERVER_KEY);
+  return given.length === expected.length && timingSafeEqual(given, expected);
+};
+
+// Luna (or anything else that knows the key) says that a user's notifications changed: their open browsers hear the new count, which makes them look again
+app.post('/notify', (req, res) => {
+  if (!keyMatches(req.headers.authorization))
+    return res.sendStatus(403);
+
+  const user = req.body?.user;
+  if (typeof user !== 'string' || user === '')
+    return res.sendStatus(422);
+
+  log(`> Notification count requested for ${user}`);
+  sendNotificationCount(io.in(user), user);
+  res.sendStatus(204);
 });
 
 const server = createServer(app);
@@ -67,7 +89,10 @@ io.on('connection', async socket => {
   socket.data.connected = moment();
   SocketMap[socket.id] = socket;
 
-  authByCookie(socket, userLog);
+  const token = socket.handshake.auth?.token;
+  if (typeof token === 'string' && token !== '')
+    void authByLunaToken(socket, token, userLog);
+  else authByCookie(socket, userLog);
 
   socket.on(ClientToServerEventNames.NAVIGATE, ({ page }) => {
     socket.data.page = page;

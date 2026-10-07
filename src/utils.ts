@@ -79,3 +79,42 @@ export function authByCookie(socket: AppSocket, userLog: (str: string) => void) 
     }));
   } else authGuest(socket);
 }
+
+/**
+ * Luna's front end gives its visitors a one time token (POST /users/me/socket-token) and sends it when it connects; Luna says who it belongs to.
+ * A socket without a valid token stays a guest, like a missing or expired cookie of Winterchilla
+ */
+export async function authByLunaToken(socket: AppSocket, token: string, userLog: (str: string) => void) {
+  if (!config.LUNA_URL) {
+    userLog('> A token was sent but LUNA_URL is not set');
+    return authGuest(socket);
+  }
+
+  try {
+    const response = await fetch(`${config.LUNA_URL}/internal/websocket/validate`, {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${config.WS_SERVER_KEY}`, 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      body: JSON.stringify({ token }),
+      signal: AbortSignal.timeout(5000),
+    });
+    if (!response.ok) {
+      userLog(`> Luna did not accept the token (${response.status})`);
+      return authGuest(socket);
+    }
+
+    const user = await response.json() as { id: number | string; name: string; role: string };
+    const id = String(user.id);
+    // The socket may have gone away, or identified itself some other way, while Luna was asked
+    if (socket.disconnected)
+      return;
+
+    socket.data.user = { id, name: user.name, role: user.role };
+    joinRoom(socket, id);
+    userLog(`> Authenticated by token as ${user.name}`);
+    socket.emit(ServerToClientEventNames.AUTH, { success: true, name: user.name, clientid: socket.id });
+    sendNotificationCount(socket, id);
+  } catch (e) {
+    userLog(`> Could not check the token with Luna (${e})`);
+    authGuest(socket);
+  }
+}
