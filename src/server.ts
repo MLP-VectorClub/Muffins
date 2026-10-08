@@ -87,6 +87,7 @@ io.on('connection', async socket => {
     ? createHash('md5').update(config.WS_SERVER_KEY).update(clientRealIp).digest().toString('base64url')
     : null;
   socket.data.connected = moment();
+  socket.data.origin = socket.handshake.headers.origin;
   SocketMap[socket.id] = socket;
 
   const token = socket.handshake.auth?.token;
@@ -144,6 +145,7 @@ io.on('connection', async socket => {
             network: connectedSocket.data.network,
             connected: connectedSocket.data.connected,
             page: connectedSocket.data.page,
+            origin: connectedSocket.data.origin,
             user: {
               id: connectedSocket.data.user.id,
               role: connectedSocket.data.user.role,

@@ -21,6 +21,8 @@ export interface SocketMetadata {
   network: string | null;
   connected: Moment;
   page: string;
+  /** The Origin header of the connection's handshake: which site (old or new front end) the visitor is on */
+  origin?: string;
   user: UserMetadata;
 }
 
