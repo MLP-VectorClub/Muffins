@@ -15,7 +15,7 @@ $ pm2 start pm2.json
 - **Winterchilla's visitors** are recognized by the `access` cookie, which is looked up in the `sessions` table of the database (`DB_NAME`, `mlpvc-rr` unless set).
 - **Luna's front end (Celestia)** sends a one time token when it connects (`auth: { token }`, from Luna's `POST /users/me/socket-token`), and `LUNA_URL` is
   where the server asks Luna who it belongs to (`POST /internal/websocket/validate`, authorized with `WS_SERVER_KEY`). Without `LUNA_URL` such sockets are guests.
-- The `origin` of every browser has to match `ORIGIN_REGEX`, e.g. `^https://(next\.)?mlpvector\.club$` for both front ends.
+- The `origin` of every browser has to match `ORIGIN_REGEX`, e.g. `^https://(next\.|old\.)?mlpvector\.club$` for the apex (Celestia), `next.` (redirects to the apex) and `old.` (Winterchilla).
 
 ## Telling it about notifications
 
