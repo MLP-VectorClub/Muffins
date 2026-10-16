@@ -4,14 +4,12 @@
     "target": "ESNext",
     "module": "ESNext",
     "rootDir": "./src",
-    "baseUrl": "./src",
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "outDir": "./build",
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "tsBuildInfoFile": "./build/.tsbuildinfo",
     "strict": true,
-    "skipLibCheck": true,
-    "ignoreDeprecations": "6.0"
+    "skipLibCheck": true
   }
 }

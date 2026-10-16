@@ -1,6 +1,5 @@
 import { Socket } from "socket.io";
 import { ClientToServerEvents, ServerToClientEvents } from "./event-names.js";
-import { Moment } from "moment-timezone";
 
 export interface ResponseWithStatus {
   success: boolean;
@@ -19,7 +18,7 @@ export interface SocketMetadata {
   current: boolean;
   rooms: Record<string, boolean>;
   network: string | null;
-  connected: Moment;
+  connected: Date;
   page: string;
   /** The Origin header of the connection's handshake: which site (old or new front end) the visitor is on */
   origin?: string;

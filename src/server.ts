@@ -4,7 +4,7 @@ import { createHash, timingSafeEqual } from 'node:crypto';
 
 import config from './config.js';
 import log from './log.js';
-import moment from './moment-setup.js';
+import { fromNow } from './time.js';
 import { ClientToServerEventNames, ClientToServerEvents, ServerToClientEventNames, ServerToClientEvents } from './event-names.js';
 import findRealIp from './real-ip.js';
 import { authByCookie, authByLunaToken, authGuest, decodeJson, getGuestID, leaveRoom, sendNotificationCount } from './utils.js';
@@ -86,7 +86,7 @@ io.on('connection', async socket => {
   socket.data.network = clientRealIp
     ? createHash('md5').update(config.WS_SERVER_KEY).update(clientRealIp).digest().toString('base64url')
     : null;
-  socket.data.connected = moment();
+  socket.data.connected = new Date();
   socket.data.origin = socket.handshake.headers.origin;
   SocketMap[socket.id] = socket;
 
@@ -152,7 +152,7 @@ io.on('connection', async socket => {
               name: connectedSocket.data.user.name,
             },
             rooms: connectedSocket.data.rooms,
-            connectedSince: connectedSocket.data.connected ? connectedSocket.data.connected.fromNow() : undefined,
+            connectedSince: connectedSocket.data.connected ? fromNow(connectedSocket.data.connected) : undefined,
           },
         }), {});
         fn({ success: true, clients });
