@@ -23,3 +23,12 @@ $ pm2 start pm2.json
 (`notif-cnt`), which is what makes them look at their notifications again. Luna does this whenever a notification is sent or read (`WS_SERVER_URL` of Luna points
 here, `http://127.0.0.1:3672`); nginx must not expose it (`setup/nginx.conf`).
 
+
+## Running in the Kubernetes cluster
+
+- Image: `ghcr.io/mlp-vectorclub/muffins` (tags `sha-<sha7>`), built from `docker/Dockerfile` on every push to `main` (amd64 + arm64). Production sync: the `Deploy` workflow (manual, asks Argo CD to sync `muffins-prod`).
+- Port `3672` (HTTP + WebSocket, plain; TLS is terminated by the ingress). Health: `GET /health` (200 when the database answers, 503 otherwise). Both websocket and long-polling transports are used. `POST /notify` (Bearer `WS_SERVER_KEY`) is called by Luna.
+- Environment, no `.env` in the image: `DB_HOST`, `DB_NAME`, `DB_USER`, `DB_PASS`, `WS_SERVER_KEY`, `ORIGIN_REGEX`, optional `LUNA_URL` (needed for Luna's one time tokens), `PORT`, `HOST` (`0.0.0.0` in the image).
+- Database access is read-only: `SELECT` on `users`, `sessions` and `notifications`.
+- No volumes. Outbound: Postgres, Luna (`LUNA_URL`) and `https://www.cloudflare.com/ips-v4|v6`.
+- State is in memory only (connected sockets); run one replica, clients reconnect on their own.

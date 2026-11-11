@@ -18,6 +18,12 @@ let app = express();
 
 app.use(express.json({ limit: '1kb' }));
 
+app.get('/health', (req, res) => {
+  Database.query('SELECT 1')
+    .then(() => res.status(200).type('text/plain').send('ok'))
+    .catch(() => res.status(503).type('text/plain').send('database unavailable'));
+});
+
 app.get('/', (req, res) => {
   res.sendStatus(403);
 });
