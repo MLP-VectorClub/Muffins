@@ -84,8 +84,10 @@ Database.on('error', err => {
 const SocketMap: Record<string, AppSocket> = {};
 
 io.on('connection', async socket => {
-  count('connections');
-  socket.on('disconnect', () => count('disconnects'));
+  // Set before anything is counted or awaited: the browser says in the handshake that its visitor opted out of the statistics
+  socket.data.optedOut = socket.handshake.auth?.optOut === true;
+  count('connections', socket);
+  socket.on('disconnect', () => count('disconnects', socket));
   socket.data.user = { id: getGuestID(socket) };
   //log('> Incoming connection');
   let isGuest = () => typeof socket.data.user?.role === 'undefined',
@@ -94,7 +96,8 @@ io.on('connection', async socket => {
     };
   socket.data.rooms = {};
   const clientRealIp = await findRealIp(socket);
-  socket.data.network = clientRealIp
+  // Nothing derived from the address is kept for a visitor who opted out
+  socket.data.network = clientRealIp && !socket.data.optedOut
     ? createHash('md5').update(config.WS_SERVER_KEY).update(clientRealIp).digest().toString('base64url')
     : null;
   socket.data.connected = new Date();
@@ -106,8 +109,9 @@ io.on('connection', async socket => {
     void authByLunaToken(socket, token, userLog);
   else authByCookie(socket, userLog);
 
-  socket.on(ClientToServerEventNames.NAVIGATE, ({ page }) => {
+  socket.on(ClientToServerEventNames.NAVIGATE, ({ page, route }) => {
     socket.data.page = page;
+    socket.data.isRoute = route === true;
   });
 
   socket.on(ClientToServerEventNames.SEND_NOTIFICATION, data => {

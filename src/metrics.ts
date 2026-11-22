@@ -8,9 +8,9 @@ import { AppSocket } from './common-types.js';
 /**
  * Prometheus metrics, on their OWN port (METRICS_PORT, unset = disabled): the main port is published through the ingress, this one never is.
  *
- * Anonymous by construction: only aggregates are exported. Nothing identifying a visitor (socket id, IP or its hash, user id or name, cookies,
- * the raw page path) is ever a label or a value; "unique networks" and "signed-in users" are plain counts of distinct values computed on each scrape.
- * Labels come from small bounded sets (a fixed origin list, role names, the first path segment) and every dimension is capped, because a few of
+ * Visitors who opted out (privacy policy page) are in none of the numbers. Anonymous by construction: only aggregates are exported. Nothing identifying a visitor (socket id, IP or its hash, user id or name, cookies,
+ * a page address) is ever a label or a value; "unique networks" and "signed-in users" are plain counts of distinct values computed on each scrape.
+ * Labels come from small bounded sets (a fixed origin list, role names, route names) and every dimension is capped, because a few of
  * them are filled from client-supplied strings.
  */
 
@@ -25,16 +25,30 @@ const counters = {
 };
 
 export type CounterName = keyof typeof counters;
-export const count = (name: CounterName) => {
+/** Pass the socket the event is about: an opted-out visitor is not counted */
+export const count = (name: CounterName, socket?: Pick<AppSocket, 'data'>) => {
+  if (socket?.data.optedOut) return;
   counters[name]++;
 };
 
-/** `/club/events/12` -> `club`; anything that does not look like a plain section name is `other`, so a client cannot make up label values */
-const pageSection = (page: string | undefined) => {
-  if (typeof page !== 'string' || page === '' || page === '/')
-    return 'home';
+/** A Next.js route name: plain lowercase segments and `[param]` placeholders, like `/users/[user]/cg` */
+const ROUTE_NAME = /^(\/([a-z0-9][a-z0-9-]{0,23}|\[{1,2}(\.{3})?[A-Za-z0-9_]{1,24}\]{1,2})){1,6}$/;
+
+/**
+ * Where the visitor is. The new front end sends its route name (no ids, names or query by construction), which is used as is when it has the expected
+ * shape. The old site sends the real address, which is cut down to its first segment (`/club/events/12?x=1` -> `/club`). Anything else is `other`, so a
+ * client cannot make up label values.
+ */
+const pageRoute = (page: string | undefined, isRoute: boolean | undefined) => {
+  // Nothing announced (a page that has no route name, an old script that has not reported yet)
+  if (typeof page !== 'string' || page === '')
+    return 'unknown';
+  if (page === '/')
+    return '/';
+  if (isRoute && page.length <= 80 && ROUTE_NAME.test(page))
+    return page;
   const first = page.split(/[/?#]/).find(part => part !== '') ?? '';
-  return /^[a-z][a-z0-9-]{0,23}$/.test(first) ? first : 'other';
+  return /^[a-z][a-z0-9-]{0,23}$/.test(first) ? `/${first}` : 'other';
 };
 
 /** Only the front ends this server accepts (ORIGIN_REGEX) get through the handshake, but the label is still reduced to the host */
@@ -60,7 +74,8 @@ const tally = (values: Iterable<string>) => {
 const escapeLabel = (value: string) => value.replace(/[\\"\n]/g, ' ');
 
 const render = (io: Server) => {
-  const sockets = [...io.sockets.sockets.values()] as AppSocket[];
+  // Opted-out visitors are left out of every number below (they still have a working connection)
+  const sockets = ([...io.sockets.sockets.values()] as AppSocket[]).filter(s => !s.data.optedOut);
   const lines: string[] = [];
   const metric = (name: string, type: 'gauge' | 'counter', help: string) => {
     lines.push(`# HELP ${name} ${help}`, `# TYPE ${name} ${type}`);
@@ -84,7 +99,7 @@ const render = (io: Server) => {
 
   byLabel('muffins_sockets_by_role', 'Open connections by account role (guest = not signed in)', 'role', sockets.map(roleOf));
   byLabel('muffins_sockets_by_origin', 'Open connections by front end host', 'origin', sockets.map(s => originHost(s.data.origin)));
-  byLabel('muffins_sockets_by_page', 'Open connections by first path segment of the page being viewed', 'section', sockets.map(s => pageSection(s.data.page)));
+  byLabel('muffins_sockets_by_page', 'Open connections by route name of the page being viewed (first path segment for the old site)', 'route', sockets.map(s => pageRoute(s.data.page, s.data.isRoute)));
 
   // Distinct salted hashes of the client address: how many separate visitors, not who (the hash itself never leaves the process)
   const networks = new Set<string>();

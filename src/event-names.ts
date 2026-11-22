@@ -12,7 +12,7 @@ export enum ClientToServerEventNames {
 
 export type ClientToServerEvents = {
   [ClientToServerEventNames.DEV_QUERY]: (data: { what: 'status' }, callback: (r: ObjectResponse<{ clients: Record<string, ClientMetadata> }> | ResponseWithStatus) => void) => void;
-  [ClientToServerEventNames.NAVIGATE]: (data: { page: string }) => void;
+  [ClientToServerEventNames.NAVIGATE]: (data: { page: string; route?: boolean }) => void;
   [ClientToServerEventNames.NOTIFICATION_COUNT]: () => void;
   [ClientToServerEventNames.SEND_NOTIFICATION]: (data: { user: string }) => void;
   [ClientToServerEventNames.STATUS]: () => void;
