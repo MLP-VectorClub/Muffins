@@ -18,7 +18,8 @@ export const handleQuery = <ResultType extends QueryResultRow>(f: (results: Quer
 
 export const decodeJson = <T extends object>(data: string | T): T => typeof data === 'string' ? JSON.parse(data) : data;
 
-export const findAuthCookie = (socket: Socket) => {
+/** The raw (still URL-encoded) value of a cookie of the socket's handshake */
+export const findCookie = (socket: Socket, name: string): string | undefined => {
   if (!socket.handshake.headers.cookie || !socket.handshake.headers.cookie.length)
     return;
   let cookieArray = socket.handshake.headers.cookie.split('; '),
@@ -27,8 +28,9 @@ export const findAuthCookie = (socket: Socket) => {
     let split = cookieArray[i].split('=');
     cookies[split[0]] = split[1];
   }
-  return cookies.access;
+  return cookies[name];
 };
+export const findAuthCookie = (socket: Socket) => findCookie(socket, 'access');
 export const getGuestID = (socket: Socket) => `Guest#${socket.id}`;
 
 export function sendNotificationCount(socket: Pick<Socket<ClientToServerEvents, ServerToClientEvents>, 'emit'>, userId: string) {
@@ -60,7 +62,10 @@ export function leaveRoom(socket: AppSocket, room: string) {
 
 export function authByCookie(socket: AppSocket, userLog: (str: string) => void) {
   let access = findAuthCookie(socket);
-  if (access === config.WS_SERVER_KEY) {
+  const lunaSession = findCookie(socket, config.LUNA_SESSION_COOKIE);
+  if (typeof access !== 'string' && typeof lunaSession === 'string' && lunaSession !== '' && config.LUNA_URL) {
+    void authByLunaSession(socket, lunaSession, userLog);
+  } else if (access === config.WS_SERVER_KEY) {
     socket.data.user = { id: 'Web Server', role: 'server' };
     userLog('> Authenticated');
   } else if (typeof access === 'string' && access.length) {
@@ -103,18 +108,54 @@ export async function authByLunaToken(socket: AppSocket, token: string, userLog:
     }
 
     const user = await response.json() as { id: number | string; name: string; role: string };
-    const id = String(user.id);
     // The socket may have gone away, or identified itself some other way, while Luna was asked
     if (socket.disconnected)
       return;
 
-    socket.data.user = { id, name: user.name, role: user.role };
-    joinRoom(socket, id);
-    userLog(`> Authenticated by token as ${user.name}`);
-    socket.emit(ServerToClientEventNames.AUTH, { success: true, name: user.name, clientid: socket.id });
-    sendNotificationCount(socket, id);
+    signIn(socket, user, 'token', userLog);
   } catch (e) {
     userLog(`> Could not check the token with Luna (${e})`);
+    authGuest(socket);
+  }
+}
+
+function signIn(socket: AppSocket, user: { id: number | string; name: string; role: string }, how: string, userLog: (str: string) => void) {
+  const id = String(user.id);
+  socket.data.user = { id, name: user.name, role: user.role };
+  joinRoom(socket, id);
+  userLog(`> Authenticated by ${how} as ${user.name}`);
+  socket.emit(ServerToClientEventNames.AUTH, { success: true, name: user.name, clientid: socket.id });
+  sendNotificationCount(socket, id);
+}
+
+/**
+ * Winterchilla's pages cannot ask Luna for a token (scripts cannot read the HttpOnly session cookie, and it should stay that way), but the browser
+ * sends that cookie along with the socket's handshake: Luna is asked who it belongs to, the cookie is passed on as it came and used for nothing else
+ */
+export async function authByLunaSession(socket: AppSocket, cookieValue: string, userLog: (str: string) => void) {
+  try {
+    const response = await fetch(`${config.LUNA_URL}/internal/websocket/session`, {
+      headers: {
+        'Authorization': `Bearer ${config.WS_SERVER_KEY}`,
+        'Accept': 'application/json',
+        'Cookie': `${config.LUNA_SESSION_COOKIE}=${cookieValue}`,
+      },
+      signal: AbortSignal.timeout(5000),
+    });
+    if (!response.ok) {
+      // 404 is the usual answer: a session of somebody who is not signed in
+      if (response.status !== 404)
+        userLog(`> Luna did not accept the session (${response.status})`);
+      return authGuest(socket);
+    }
+
+    const user = await response.json() as { id: number | string; name: string; role: string };
+    if (socket.disconnected)
+      return;
+
+    signIn(socket, user, 'session', userLog);
+  } catch (e) {
+    userLog(`> Could not check the session with Luna (${e})`);
     authGuest(socket);
   }
 }

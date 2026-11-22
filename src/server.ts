@@ -136,8 +136,9 @@ io.on('connection', async socket => {
   });
 
   socket.on(ClientToServerEventNames.DEV_QUERY, async (params, fn) => {
+    // Not a `return`: the client waits for the callback, and without an answer its diagnostics page just stays empty
     if (socket.data.user?.role !== 'developer')
-      return { success: false };
+      return fn({ success: false, message: 'Only developers can ask for this' });
 
     params = decodeJson(params);
 

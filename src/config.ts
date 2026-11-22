@@ -20,6 +20,8 @@ const envSchema = z.object({
   // Where Luna answers from this machine (e.g. http://127.0.0.1:8000), to check the one time tokens its front end hands to browsers; without it only
   // Winterchilla's cookie works
   LUNA_URL: z.url().optional(),
+  // Name of the (HttpOnly) session cookie of Luna's front end; a browser that sends it is identified by asking Luna, see authByLunaSession()
+  LUNA_SESSION_COOKIE: z.string().min(1).default('mlp_vector_club_session'),
   ORIGIN_REGEX: z.string().min(1).default('^(https://mlpvector\\.lc|http://localhost)').transform((value, ctx) => {
     try {
       return new RegExp(value);
