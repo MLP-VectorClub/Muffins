@@ -11,6 +11,7 @@ import { authByCookie, authByLunaToken, authGuest, decodeJson, getGuestID, leave
 import { Database } from './database.js';
 import { AppSocket, ClientMetadata, InterServerEvents, SocketMetadata } from './common-types.js';
 import { createServer } from 'http';
+import { count, startMetricsServer } from './metrics.js';
 
 process.title = 'Muffins';
 
@@ -44,6 +45,7 @@ app.post('/notify', (req, res) => {
     return res.sendStatus(422);
 
   log(`> Notification count requested for ${user}`);
+  count('notifyPushes');
   sendNotificationCount(io.in(user), user);
   res.sendStatus(204);
 });
@@ -64,6 +66,7 @@ const io = new Server<ClientToServerEvents, ServerToClientEvents, InterServerEve
   },
 });
 log(`[Socket.io] Server listening on https://${config.HOST}:${config.PORT}`);
+startMetricsServer(io);
 
 Database.connect((err: Error | null) => {
   if (err !== null) {
@@ -81,6 +84,8 @@ Database.on('error', err => {
 const SocketMap: Record<string, AppSocket> = {};
 
 io.on('connection', async socket => {
+  count('connections');
+  socket.on('disconnect', () => count('disconnects'));
   socket.data.user = { id: getGuestID(socket) };
   //log('> Incoming connection');
   let isGuest = () => typeof socket.data.user?.role === 'undefined',

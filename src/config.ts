@@ -10,6 +10,8 @@ if (existsSync(envFile))
 const envSchema = z.object({
   PORT: z.coerce.number().int().positive().default(3672),
   HOST: z.string().min(1).default('127.0.0.1'),
+  // Second, internal-only port with Prometheus metrics (aggregate counts, no personal data, see metrics.ts); unset = no metrics server
+  METRICS_PORT: z.coerce.number().int().positive().optional(),
 
   DB_HOST: z.string().min(1),
   // `mlpvc-rr` is Winterchilla's database, Luna's own is used once the two share one

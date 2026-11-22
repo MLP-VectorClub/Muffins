@@ -5,6 +5,7 @@ import { Database } from "./database.js";
 import { AppSocket, UserMetadata } from "./common-types.js";
 import config from "./config.js";
 import createHash from "sha.js";
+import { count } from "./metrics.js";
 
 const sha256hash = (data: string) => createHash('sha256').update(data, 'utf8').digest('hex');
 
@@ -43,6 +44,7 @@ export function sendNotificationCount(socket: Pick<Socket<ClientToServerEvents, 
 }
 
 export function authGuest(socket: AppSocket) {
+  count('authGuest');
   socket.emit(ServerToClientEventNames.AUTH_GUEST, { success: true, clientid: socket.id });
 }
 
@@ -77,6 +79,7 @@ export function authByCookie(socket: AppSocket, userLog: (str: string) => void) 
       }
 
       socket.data.user = result[0];
+      count('authUser');
 
       joinRoom(socket, socket.data.user.id);
       socket.emit(ServerToClientEventNames.AUTH, { success: true, name: socket.data.user.name, clientid: socket.id });
@@ -122,6 +125,7 @@ export async function authByLunaToken(socket: AppSocket, token: string, userLog:
 function signIn(socket: AppSocket, user: { id: number | string; name: string; role: string }, how: string, userLog: (str: string) => void) {
   const id = String(user.id);
   socket.data.user = { id, name: user.name, role: user.role };
+  count('authUser');
   joinRoom(socket, id);
   userLog(`> Authenticated by ${how} as ${user.name}`);
   socket.emit(ServerToClientEventNames.AUTH, { success: true, name: user.name, clientid: socket.id });
